@@ -7,7 +7,7 @@ import getpass
 import tempfile
 import re
 
-SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/skalfa/scripts/master/owr/sources"
+SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/oxwall/owr/master/sources"
 
 def _is_file(filePath):
     return filePath.startswith((".", "..", os.sep, "~"))
