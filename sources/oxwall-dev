@@ -1,0 +1,3 @@
+<include oxwall-core>
+<include include/oxwall-plugins>
+<include include/skalfa-plugins>

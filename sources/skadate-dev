@@ -1,0 +1,4 @@
+<include skadate-core>
+<include include/oxwall-plugins>
+<include include/skalfa-plugins>
+<include include/skadate-plugins>

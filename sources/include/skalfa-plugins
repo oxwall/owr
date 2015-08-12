@@ -1,0 +1,18 @@
+[plugins github.com/skalfa]
+
+billing2checkout = billing_2checkout
+billingccbill = billing_ccbill
+billingpaypal = billing_paypal
+billingstripe = billing_stripe
+billingpwall = billing_pwall
+billingtxtnation = billing_txtnation
+im
+market
+matchmaking
+membership
+moderation = premoderation
+spamfilter = spam_filter
+staff
+store
+usercredits = user_credits
+smsverification

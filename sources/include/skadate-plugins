@@ -1,0 +1,15 @@
+[plugins github.com/skalfa]
+
+skadate
+skmigration = skadate_migration
+skandroid = skadateandroid
+skadateios
+slpremiumtheme
+winks
+usearch
+bookmarks
+matchmaking
+googlelocation = google_map_location
+pcgallery
+hotlist
+ocsguests = ocs_guests

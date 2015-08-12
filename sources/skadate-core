@@ -1,0 +1,7 @@
+<include oxwall-core>
+
+[install github.com/skalfa]
+install
+
+[themes github.com/skalfa]
+morning

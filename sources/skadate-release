@@ -1,0 +1,40 @@
+<include skadate-core>
+
+[plugins github.com/oxwall]
+
+advertisement
+photo
+mailbox
+notifications
+virtualgifts = virtual_gifts
+contactus
+ganalytics = google_analytics
+fbconnect
+
+
+[plugins github.com/skalfa]
+
+billingccbill = billing_ccbill
+bookmarks
+winks
+matchmaking
+usearch
+pcgallery
+googlelocation = google_map_location
+membership
+ocsguests = ocs_guests
+billingpaypal = billing_paypal
+usercredits = user_credits
+hotlist
+skadate
+moderation = premoderation
+
+
+[themes github.com/skalfa]
+
+trend
+tenderness
+gentle
+friends
+sweet
+morning

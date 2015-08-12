@@ -1,0 +1,8 @@
+[core github.com/oxwall]
+oxwall
+
+[install github.com/oxwall]
+install
+
+[themes github.com/oxwall]
+origin

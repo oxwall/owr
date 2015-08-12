@@ -1,0 +1,28 @@
+[plugins github.com/oxwall]
+
+watchdog
+virtualgifts = virtual_gifts
+video
+tinychat
+socialsharing = social_sharing
+slideshow
+skeleton
+privacy
+photo
+notifications
+newsfeed
+mailbox
+groups
+ganalytics = google_analytics
+friends
+forum
+fbconnect
+event
+csvimporter = csv_importer
+contactus
+contactimporter = contact_importer
+cloudflare
+blogs
+birthdays
+advertisement
+geolocationdata
