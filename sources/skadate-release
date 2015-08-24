@@ -28,6 +28,7 @@ usercredits = user_credits
 hotlist
 skadate
 moderation = premoderation
+protectedphotos
 
 
 [themes github.com/skalfa]
