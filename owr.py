@@ -549,12 +549,14 @@ class Builder:
         try:
             installRecord = sections["install"].values()[0]
             del sections["install"]
+            installBranch = installRecord["branch"]
             installUrl = "https://%s%s/%s.git" % (authPrefix, installRecord["config"][0], installRecord["name"])
         except KeyError:
+            installBranch = "master"
             installUrl = "https://github.com/oxwall/install.git"
 
 
-        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), installUrl, self._arguments, installRecord["branch"], False)
+        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), installUrl, self._arguments, installBranch, False)
 
         for sectionName in sections:
             records = sections[sectionName]
