@@ -132,14 +132,16 @@ class SourceListParser:
             try:
                 data = urllib2.urlopen(request)
             except urllib2.HTTPError:
-                pass
+                print "error: Source list not found !!!"
+                exit()
 
             basePath = source[0:source.rindex("/")] + "/"
         else:
             try:
                 data = open(source)
             except IOError:
-                pass
+                print "error: Could not open source list !!!"
+                exit()
 
             basePath = os.path.dirname(source)
 
