@@ -537,11 +537,13 @@ class Builder:
         try:
             coreRecord = sections["core"].values()[0]
             del sections["core"]
+            coreBranch = coreRecord["branch"]
             coreUrl = "https://%s%s/%s.git" % (authPrefix, coreRecord["config"][0], coreRecord["name"])
         except KeyError:
+            coreBranch = "master"
             coreUrl = "https://github.com/oxwall/oxwall.git"
 
-        command.main(os.path.abspath(self._arguments.path), coreUrl, self._arguments, coreRecord["branch"])
+        command.main(os.path.abspath(self._arguments.path), coreUrl, self._arguments, coreBranch)
 
         # install
         try:
