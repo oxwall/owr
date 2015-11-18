@@ -132,14 +132,16 @@ class SourceListParser:
             try:
                 data = urllib2.urlopen(request)
             except urllib2.HTTPError:
-                pass
+                print "error: Source list not found !!!"
+                exit()
 
             basePath = source[0:source.rindex("/")] + "/"
         else:
             try:
                 data = open(source)
             except IOError:
-                pass
+                print "error: Could not open source list !!!"
+                exit()
 
             basePath = os.path.dirname(source)
 
@@ -537,22 +539,26 @@ class Builder:
         try:
             coreRecord = sections["core"].values()[0]
             del sections["core"]
+            coreBranch = coreRecord["branch"]
             coreUrl = "https://%s%s/%s.git" % (authPrefix, coreRecord["config"][0], coreRecord["name"])
         except KeyError:
+            coreBranch = "master"
             coreUrl = "https://github.com/oxwall/oxwall.git"
 
-        command.main(os.path.abspath(self._arguments.path), coreUrl, self._arguments, coreRecord["branch"])
+        command.main(os.path.abspath(self._arguments.path), coreUrl, self._arguments, coreBranch)
 
         # install
         try:
             installRecord = sections["install"].values()[0]
             del sections["install"]
+            installBranch = installRecord["branch"]
             installUrl = "https://%s%s/%s.git" % (authPrefix, installRecord["config"][0], installRecord["name"])
         except KeyError:
+            installBranch = "master"
             installUrl = "https://github.com/oxwall/install.git"
 
 
-        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), installUrl, self._arguments, installRecord["branch"], False)
+        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), installUrl, self._arguments, installBranch, False)
 
         for sectionName in sections:
             records = sections[sectionName]
