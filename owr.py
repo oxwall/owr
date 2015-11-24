@@ -169,6 +169,7 @@ class Arguments:
     source = "oxwall"
     email = None
     verbose = False
+    clearChanges = False
 
     runDir = None
 
@@ -224,6 +225,13 @@ class Arguments:
                             default=self.verbose,
                             required=False,
                             help="Pass this flag if you want more verbose output")
+
+        parser.add_argument('-c','--clear-changes',
+                            dest="clearChanges",
+                            action="store_true",
+                            default=self.clearChanges,
+                            required=False,
+                            help="Pass this flag if you want to clear all changes you made. Cannot be undone!!!")
 
         parser.parse_args(namespace=self)
 
@@ -353,6 +361,9 @@ class UpdateCommand(Command):
         absPath = os.path.abspath(rootDir)
         os.system(("git --work-tree=%s --git-dir=%s pull " + quiet + " origin master") % (absPath + os.sep, os.path.join(absPath, ".git")))
 
+        if args.clearChanges:
+            os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (absPath + os.sep, os.path.join(absPath, ".git")))
+
         if branch != "master":
             _change_branch(absPath, branch, not args.verbose)
 
@@ -364,6 +375,9 @@ class UpdateCommand(Command):
         if os.path.isdir(path):
             if not args.verbose:
                 _log_operation("update", url, path, branch)
+
+            if args.clearChanges:
+                os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (path + os.sep, os.path.join(path, ".git")))
 
             # Checkout master branch
             os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " master") % (path + os.sep, os.path.join(path, ".git")))
