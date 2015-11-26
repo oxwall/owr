@@ -16,7 +16,7 @@ def _is_relative_path(filePath):
     return filePath.startswith((".", ".."))
 
 def _is_relative_url(url):
-    return not _is_absolute_url(url) and "/" in url
+    return not _is_absolute_url(url) and _is_relative_path(url)
 
 def _is_absolute_url(url):
     return url.startswith(("http://", "https://"))
@@ -73,7 +73,12 @@ class SourceListParser:
 
                 return self._fetchSource(path, "file")
 
-            url = source if _is_absolute_url(source) else "%s/%s" % (SOURCE_URL_PREFIX, source)
+            if _is_absolute_url(source):
+                url = source
+            elif _is_relative_url(source):
+                url = "%s/%s" % (basePath.rstrip("/"), source)
+            else:
+                url = "%s/%s" % (SOURCE_URL_PREFIX.rstrip("/"), source)
 
             return self._fetchSource(url, "url")
 
@@ -132,7 +137,7 @@ class SourceListParser:
             try:
                 data = urllib2.urlopen(request)
             except urllib2.HTTPError:
-                print "error: Source list not found !!!"
+                print "error: Source list not found: (%s)!!!" % (source)
                 exit()
 
             basePath = source[0:source.rindex("/")] + "/"
@@ -140,7 +145,7 @@ class SourceListParser:
             try:
                 data = open(source)
             except IOError:
-                print "error: Could not open source list !!!"
+                print "error: Could not open source list: (%s)!!!" % (source)
                 exit()
 
             basePath = os.path.dirname(source)
