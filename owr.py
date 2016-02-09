@@ -1,50 +1,67 @@
 #!/usr/bin/env python
 
 import argparse
-import os, sys, shutil
-import urllib2, base64
+import base64
 import getpass
-import tempfile
+import os
 import re
+import sys
+import shutil
+import tempfile
+import urllib2
 
 SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/oxwall/owr/master/sources"
 
-def _is_file(filePath):
-    return filePath.startswith((".", "..", os.sep, "~"))
 
-def _is_relative_path(filePath):
-    return filePath.startswith((".", ".."))
+def _is_file(file_path):
+    return file_path.startswith((".", "..", os.sep, "~"))
+
+
+def _is_relative_path(file_path):
+    return file_path.startswith((".", ".."))
+
 
 def _is_relative_url(url):
     return not _is_absolute_url(url) and _is_relative_path(url)
 
+
 def _is_absolute_url(url):
     return url.startswith(("http://", "https://"))
 
-def _change_branch(dir, branch, isQuiet = True):
-    quiet = "--quiet" if isQuiet else ""
-    os.system(("git --work-tree=%s --git-dir=%s fetch " + quiet + " origin %s") % (dir + os.sep, os.path.join(dir, ".git"), branch))
-    os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " origin/%s") % (dir + os.sep, os.path.join(dir, ".git"), branch))
 
-def _log_operation(operation, repoUrl, path, branch):
-    class Colors:
-        BLUE = '\033[94m'
-        RED = '\033[91m'
-        END = '\033[0m'
+def _change_branch(directory, branch, is_quiet=True):
+    quiet = "--quiet" if is_quiet else ""
+    os.system(
+        ("git --work-tree=%s --git-dir=%s fetch " + quiet + " origin %s") % (
+            directory + os.sep, os.path.join(directory, ".git"), branch
+        )
+    )
+    os.system(
+        ("git --work-tree=%s --git-dir=%s checkout " + quiet + " origin/%s") % (
+            directory + os.sep, os.path.join(directory, ".git"), branch
+        )
+    )
 
-    repoName = repoUrl[repoUrl.rindex("/") + 1:-4]
-    branchColor = Colors.BLUE if branch == "master" else Colors.RED
 
-    args = (Colors.BLUE + repoName + Colors.END, branchColor + branch + Colors.END, Colors.BLUE + path + Colors.END)
+def _log_operation(operation, repo_url, path, branch):
+    colors = {'blue': '\033[94m', 'red': '\033[91m', 'end': '\033[0m'}
+
+    repo_name = repo_url[repo_url.rindex("/") + 1:-4]
+    branch_color = colors['blue'] if branch == "master" else colors['red']
+
+    args = (
+        colors['blue'] + repo_name + colors['end'],
+        branch_color + branch + colors['end'],
+        colors['blue'] + path + colors['end']
+    )
 
     if operation == "update":
-        print ("Updating %s (%s) in %s") % args
+        print "Updating %s (%s) in %s" % args
     elif operation == "clone":
-        print ("Cloning %s (%s) to %s") % args
+        print "Cloning %s (%s) to %s" % args
 
 
 class SourceListParser:
-
     _sourceListType = "global"
 
     _defaultConfig = ["github.com/oxwall"]
@@ -60,27 +77,27 @@ class SourceListParser:
         self._arguments = arguments
         self._repoSection["config"] = self._defaultConfig
 
-    def _processOperation(self, command, basePath):
+    def _process_operation(self, command, base_path):
         parts = map(str.strip, command.split(" "))
 
-        gSourceType = self._arguments.sourceType
+        g_source_type = self._arguments.sourceType
 
-        def include(source, *args):
-            if gSourceType == "file" and _is_file(source):
+        def include(source):
+            if g_source_type == "file" and _is_file(source):
                 path = source
                 if _is_relative_path(source):
-                    path = os.path.normpath(os.path.join(basePath, source))
+                    path = os.path.normpath(os.path.join(base_path, source))
 
-                return self._fetchSource(path, "file")
+                return self._fetch_source(path, "file")
 
             if _is_absolute_url(source):
                 url = source
             elif _is_relative_url(source):
-                url = "%s/%s" % (basePath.rstrip("/"), source)
+                url = "%s/%s" % (base_path.rstrip("/"), source)
             else:
                 url = "%s/%s" % (SOURCE_URL_PREFIX.rstrip("/"), source)
 
-            return self._fetchSource(url, "url")
+            return self._fetch_source(url, "url")
 
         operations = {"include": include}
 
@@ -91,13 +108,12 @@ class SourceListParser:
         except (IndexError, KeyError, TypeError):
             return
 
-
-    def _processSection(self, section, basePath):
+    def _process_section(self, section):
         parts = map(str.strip, section.split(" "))
         self._repoSection["name"] = parts[0]
         self._repoSection["config"] = parts[1:] if len(parts) > 1 else self._defaultConfig
 
-    def _processLine(self, line, basePath):
+    def _process_line(self, line):
         parts = map(str.strip, line.split("="))
 
         name = parts[0]
@@ -107,27 +123,28 @@ class SourceListParser:
             alias = name
 
         branch = "master"
-        regExp = re.compile("\((.*)\)")
-        args = re.findall(regExp, alias)
+        reg_exp = re.compile("\((.*)\)")
+        args = re.findall(reg_exp, alias)
 
         if args:
-            alias = re.sub(regExp, "", alias)
-            name = re.sub(regExp, "", name)
+            alias = re.sub(reg_exp, "", alias)
+            name = re.sub(reg_exp, "", name)
             branch = args[0]
 
-        if not self.records.has_key(self._repoSection["name"]):
+        if self._repoSection["name"] not in self.records:
             self.records[self._repoSection["name"]] = {}
 
         self.records[self._repoSection["name"]][name] = {
-            "name": name.strip(), "alias": alias.strip(), "branch": branch.strip(), "config": self._repoSection["config"]
+            "name": name.strip(), "alias": alias.strip(), "branch": branch.strip(),
+            "config": self._repoSection["config"]
         }
 
     def fetch(self):
-        return self._fetchSource(self._arguments.source, self._arguments.sourceType)
+        return self._fetch_source(self._arguments.source, self._arguments.sourceType)
 
-    def _fetchSource(self, source, sourceType):
+    def _fetch_source(self, source, source_type):
         data = []
-        if sourceType == "url":
+        if source_type == "url":
             request = urllib2.Request(source)
 
             if self._arguments.username:
@@ -137,33 +154,33 @@ class SourceListParser:
             try:
                 data = urllib2.urlopen(request)
             except urllib2.HTTPError:
-                print "error: Source list not found: (%s)!!!" % (source)
+                print "error: Source list not found: (%s)!!!" % source
                 exit()
 
-            basePath = source[0:source.rindex("/")] + "/"
+            base_path = source[0:source.rindex("/")] + "/"
         else:
             try:
                 data = open(source)
             except IOError:
-                print "error: Could not open source list: (%s)!!!" % (source)
+                print "error: Could not open source list: (%s)!!!" % source
                 exit()
 
-            basePath = os.path.dirname(source)
+            base_path = os.path.dirname(source)
 
         for line in data:
             line = line.strip()
             if line and not line.startswith("#"):
                 if line.startswith("[") and line.endswith("]"):
-                    self._processSection(line[1:-1].strip(), basePath)
+                    self._process_section(line[1:-1].strip())
                 elif line.startswith("<") and line.endswith(">"):
-                    self._processOperation(line[1:-1].strip(), basePath)
+                    self._process_operation(line[1:-1].strip(), base_path)
                 else:
-                    self._processLine(line, basePath)
+                    self._process_line(line)
 
         return self.records
 
-class Arguments:
 
+class Arguments:
     _sourcesUrlPrefix = SOURCE_URL_PREFIX
 
     username = None
@@ -175,11 +192,11 @@ class Arguments:
     email = None
     verbose = False
     clearChanges = False
+    disableChmod = False
 
     runDir = None
 
-
-    sourceType="url"
+    sourceType = "url"
 
     def __init__(self, commands):
         self._commands = dict(zip(map(lambda c: c.name, commands), commands))
@@ -197,55 +214,62 @@ class Arguments:
 
         parser.add_argument("source",
                             nargs='?',
-                            type=self._Source,
+                            type=self._source,
                             default=self.source,
                             help="Source list file. Might be url, path or a reserved name ( oxwall, skadate, etc.. )")
 
         parser.add_argument("path",
                             nargs='?',
                             default=".",
-                            type=self._Path,
+                            type=self._path,
                             help="Path to Oxwall Core root folder")
 
-        parser.add_argument('-u','--user',
+        parser.add_argument('-u', '--user',
                             dest="username",
                             required=False,
                             help="github.com user name")
 
-        parser.add_argument('-e','--email',
+        parser.add_argument('-e', '--email',
                             dest="email",
                             required=False,
                             help="github.com user email. Required for migrate command only")
 
-        parser.add_argument('-p','--password',
+        parser.add_argument('-p', '--password',
                             dest="requirePassword",
                             action="store_true",
                             default=self.requirePassword,
                             required=False,
                             help="Pass this flag if password authorization is required")
 
-        parser.add_argument('-v','--verbose',
+        parser.add_argument('-v', '--verbose',
                             dest="verbose",
                             action="store_true",
                             default=self.verbose,
                             required=False,
                             help="Pass this flag if you want more verbose output")
 
-        parser.add_argument('-c','--clear-changes',
+        parser.add_argument('-c', '--clear-changes',
                             dest="clearChanges",
                             action="store_true",
                             default=self.clearChanges,
                             required=False,
                             help="Pass this flag if you want to clear all changes you made. Cannot be undone!!!")
 
+        parser.add_argument('--disable-chmod',
+                            dest="disableChmod",
+                            action="store_true",
+                            default=self.disableChmod,
+                            required=False,
+                            help="Pass this flag if you want to disable chmod!!!")
+
         parser.parse_args(namespace=self)
 
-    def _Path(self, path):
+    def _path(self, path):
         command = self._commands[self.command]
 
-        return command.validatePath(path.rstrip(os.sep), self)
+        return command.validate_path(path.rstrip(os.sep), self)
 
-    def _Source(self, source):
+    def _source(self, source):
         if self.requirePassword and self.username:
             try:
                 self.password = getpass.getpass("Enter password for user '%s': " % self.username)
@@ -275,104 +299,107 @@ class Arguments:
             request.get_method = lambda: 'HEAD'
             urllib2.urlopen(request)
         except:
-            raise argparse.ArgumentTypeError( 'Source list not found' )
+            raise argparse.ArgumentTypeError('Source list not found')
 
         return source
 
-    def readConfig(self, name):
-        rootPath = self.path if self.path else '.'
-        path = os.path.join(rootPath, ".owr", name)
+    def read_config(self, name):
+        root_path = self.path if self.path else '.'
+        path = os.path.join(root_path, ".owr", name)
 
         data = None
         if os.path.isfile(path):
-            with open (path, "r") as file:
-                data=file.read()
+            with open(path, "r") as f:
+                data = f.read()
 
         return data
 
-    def readConfigs(self):
-        username = self.readConfig("username")
+    def read_configs(self):
+        username = self.read_config("username")
         if not (username is None):
             self.username = username
 
-        email = self.readConfig("email")
+        email = self.read_config("email")
         if not (email is None):
             self.email = email
 
-        requirePassword = self.readConfig("require-password")
-        if not (requirePassword is None):
-            self.requirePassword = requirePassword
+        require_password = self.read_config("require-password")
+        if not (require_password is None):
+            self.requirePassword = require_password
 
-        source = self.readConfig("source")
+        source = self.read_config("source")
         if not (source is None):
             self.source = source
 
-    def saveConfig(self, name, value):
+    def save_config(self, name, value):
         if not os.path.isdir(self.path):
             return
 
-        owrDir=os.path.join(self.path, ".owr")
-        if not os.path.isdir(owrDir):
-            os.mkdir(owrDir)
+        owr_dir = os.path.join(self.path, ".owr")
+        if not os.path.isdir(owr_dir):
+            os.mkdir(owr_dir)
 
-        path = os.path.join(owrDir, name)
-        with open(path, "w+") as file:
-            file.write(str(value))
+        path = os.path.join(owr_dir, name)
+        with open(path, "w+") as f:
+            f.write(str(value))
 
-
-    def saveConfigs(self):
-        self.saveConfig("username", self.username if self.username else "")
-        self.saveConfig("require-password", 1 if self.requirePassword else 0)
-        self.saveConfig("source", self.source if self.source else "")
-        self.saveConfig("email", self.email if self.email else "")
+    def save_configs(self):
+        self.save_config("username", self.username if self.username else "")
+        self.save_config("require-password", 1 if self.requirePassword else 0)
+        self.save_config("source", self.source if self.source else "")
+        self.save_config("email", self.email if self.email else "")
 
 
 class Command:
-
     def __init__(self, name):
         self.name = name
 
-    def validatePath(self, path, args):
+    def validate_path(self, path, args):
         return path
 
     def fetched(self, sections, args):
         pass
 
-    def main(self, rootDir, url, args, branch):
+    def main(self, root_dir, url, args, branch):
         pass
 
     def item(self, path, url, args, branch, *opt):
         pass
 
-    def completed(self, rootDir, url, args):
+    def completed(self, root_dir, url, args):
         pass
+
 
 class UpdateCommand(Command):
     def __init__(self):
         Command.__init__(self, "update")
 
-    def validatePath(self, path, args):
+    def validate_path(self, path, args):
         if not os.path.isdir(os.path.join(path, ".git")):
             raise argparse.ArgumentTypeError('Not a git repository')
 
         return path
 
-    def main(self, rootDir, url, args, branch):
+    def main(self, root_dir, url, args, branch):
         quiet = ""
         if not args.verbose:
-            _log_operation("update", url, rootDir, branch)
+            _log_operation("update", url, root_dir, branch)
             quiet = "--quiet"
 
-        absPath = os.path.abspath(rootDir)
-        os.system(("git --work-tree=%s --git-dir=%s pull " + quiet + " origin master") % (absPath + os.sep, os.path.join(absPath, ".git")))
+        abs_path = os.path.abspath(root_dir)
+        os.system(("git --work-tree=%s --git-dir=%s pull " + quiet + " origin master") % (
+            abs_path + os.sep, os.path.join(abs_path, ".git"))
+        )
 
         if args.clearChanges:
-            os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (absPath + os.sep, os.path.join(absPath, ".git")))
+            os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (
+                abs_path + os.sep, os.path.join(abs_path, ".git"))
+            )
 
         if branch != "master":
-            _change_branch(absPath, branch, not args.verbose)
+            _change_branch(abs_path, branch, not args.verbose)
 
-    def item(self, path, url, args, branch, create = True, *opt):
+    def item(self, path, url, args, branch, create=True, *opt):
         quiet = ""
         if not args.verbose:
             quiet = "--quiet"
@@ -382,13 +409,19 @@ class UpdateCommand(Command):
                 _log_operation("update", url, path, branch)
 
             if args.clearChanges:
-                os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (path + os.sep, os.path.join(path, ".git")))
+                os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " -- .") % (
+                    path + os.sep, os.path.join(path, ".git"))
+                )
 
             # Checkout master branch
-            os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " master") % (path + os.sep, os.path.join(path, ".git")))
+            os.system(("git --work-tree=%s --git-dir=%s checkout " + quiet + " master") % (
+                path + os.sep, os.path.join(path, ".git"))
+            )
 
             # Pull master branch
-            os.system(("git --work-tree=%s --git-dir=%s pull " + quiet + " origin master") % (path + os.sep, os.path.join(path, ".git")))
+            os.system(("git --work-tree=%s --git-dir=%s pull " + quiet + " origin master") % (
+                path + os.sep, os.path.join(path, ".git"))
+            )
         elif create:
             if not args.verbose:
                 _log_operation("clone", url, path, branch)
@@ -398,11 +431,12 @@ class UpdateCommand(Command):
         if branch != "master":
             _change_branch(path, branch, not args.verbose)
 
+
 class CloneCommand(Command):
     def __init__(self):
         Command.__init__(self, "clone")
 
-    def validatePath(self, path, args):
+    def validate_path(self, path, args):
         shall = True
         if os.path.isdir(path) and os.listdir(path):
             shall = raw_input("%s (Y/n): " % "Destination folder is not empty. Do you want to continue?").lower() == 'y'
@@ -415,27 +449,27 @@ class CloneCommand(Command):
 
         return path
 
-    def main(self, rootDir, url, args, branch):
+    def main(self, root_dir, url, args, branch):
         quiet = ""
         if not args.verbose:
-            _log_operation("clone", url, rootDir, branch)
+            _log_operation("clone", url, root_dir, branch)
             quiet = "--quiet"
 
-        if os.path.isdir(rootDir):
+        if os.path.isdir(root_dir):
 
-            tmpDir = tempfile.mkdtemp()
+            tmp_dir = tempfile.mkdtemp()
 
-            os.system(("git clone " + quiet + " --no-checkout %s %s") % (url, tmpDir))
-            shutil.move(os.path.join(tmpDir, ".git"), os.path.join(rootDir, ".git"))
-            os.chdir(rootDir)
+            os.system(("git clone " + quiet + " --no-checkout %s %s") % (url, tmp_dir))
+            shutil.move(os.path.join(tmp_dir, ".git"), os.path.join(root_dir, ".git"))
+            os.chdir(root_dir)
             os.system("git reset " + quiet + " --hard HEAD")
 
-            shutil.rmtree(tmpDir)
+            shutil.rmtree(tmp_dir)
         else:
-            os.system("git clone " + quiet + " %s %s" % (url, rootDir))
+            os.system("git clone " + quiet + " %s %s" % (url, root_dir))
 
         if branch != "master":
-            _change_branch(rootDir, branch, not args.verbose)
+            _change_branch(root_dir, branch, not args.verbose)
 
         os.chdir(args.runDir)
 
@@ -450,34 +484,34 @@ class CloneCommand(Command):
         if branch != "master":
             _change_branch(path, branch, not args.verbose)
 
-    def completed(self, rootDir, url, args):
-        configFile = os.path.join(rootDir, "ow_includes", "config.php")
-        shutil.copyfile(os.path.join(rootDir, "ow_includes", "config.php.default"), configFile)
+    def completed(self, root_dir, url, args):
+        config_file = os.path.join(root_dir, "ow_includes", "config.php")
+        shutil.copyfile(os.path.join(root_dir, "ow_includes", "config.php.default"), config_file)
 
-        os.system("chmod 777 %s" % configFile)
-        os.system("chmod -R 777 %s" % os.path.join(rootDir, "ow_userfiles"))
-        os.system("chmod -R 777 %s" % os.path.join(rootDir, "ow_pluginfiles"))
-        os.system("chmod -R 777 %s" % os.path.join(rootDir, "ow_static"))
-        os.system("chmod -R 777 %s" % os.path.join(rootDir, "ow_log"))
+        templatec_path = os.path.join(root_dir, "ow_smarty", "template_c")
+        if not os.path.isdir(templatec_path):
+            os.mkdir(templatec_path)
 
-        templatecPath = os.path.join(rootDir, "ow_smarty", "template_c")
-        if not os.path.isdir(templatecPath):
-            os.mkdir(templatecPath)
-
-        os.system("chmod -R 777 %s" % templatecPath)
+        if not args.disableChmod:
+            os.system("chmod 777 %s" % config_file)
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_userfiles"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_pluginfiles"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_static"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_log"))
+            os.system("chmod -R 777 %s" % templatec_path)
 
 
 class MigrateCommand(Command):
     def __init__(self):
         Command.__init__(self, "migrate")
 
-    def validatePath(self, path, args):
+    def validate_path(self, path, args):
         if not os.path.isfile(os.path.join(path, "ow_version.xml")):
             raise argparse.ArgumentTypeError('Oxwall based software not found')
 
         return path
 
-    def main(self, rootDir, url, args):
+    def main(self, root_dir, url, args, branch):
         if not args.username:
             print "error: Github user name is required !!!"
             exit()
@@ -490,22 +524,23 @@ class MigrateCommand(Command):
         if not os.path.isdir(path):
             return
 
-        tmpDir = tempfile.mkdtemp()
+        tmp_dir = tempfile.mkdtemp()
 
-        os.chdir(tmpDir)
+        os.chdir(tmp_dir)
 
-        os.system("git clone %s %s" % (url, tmpDir))
+        os.system("git clone %s %s" % (url, tmp_dir))
         os.system("git config user.email %s" % args.email)
         os.system("git config user.name %s" % args.username)
 
-        os.system("cp -r %s %s" % (os.path.join(path, "*"), tmpDir + os.sep))
+        os.system("cp -r %s %s" % (os.path.join(path, "*"), tmp_dir + os.sep))
 
         os.system("git add .")
         os.system('git ci -m "Source code"')
         os.system("git push -u origin master")
 
         os.chdir(args.runDir)
-        os.system("rm -rf %s" % tmpDir)
+        os.system("rm -rf %s" % tmp_dir)
+
 
 # not completed
 class InfoCommand(Command):
@@ -513,7 +548,7 @@ class InfoCommand(Command):
         Command.__init__(self, "info")
         self.records = []
 
-    def validatePath(self, path, args):
+    def validate_path(self, path, args):
         if not os.path.isdir(os.path.join(path, ".owr")):
             raise argparse.ArgumentTypeError('owr information not found')
 
@@ -522,8 +557,9 @@ class InfoCommand(Command):
     def fetched(self, sections, args):
         pass
 
-    def completed(self, rootDir, url, args):
+    def completed(self, root_dir, url, args):
         pass
+
 
 class Builder:
     _arguments = None
@@ -547,68 +583,70 @@ class Builder:
         sections = self._parser.fetch()
         command.fetched(sections, self._arguments)
 
-        authPrefix = ""
+        auth_prefix = ""
         if self._arguments.username:
             auth = self._arguments.username
             if self._arguments.password:
                 auth = "%s:%s" % (self._arguments.username, urllib2.quote(self._arguments.password))
-            authPrefix = "%s@" % auth
+            auth_prefix = "%s@" % auth
 
         # core
         try:
-            coreRecord = sections["core"].values()[0]
+            core_record = sections["core"].values()[0]
             del sections["core"]
-            coreBranch = coreRecord["branch"]
-            coreUrl = "https://%s%s/%s.git" % (authPrefix, coreRecord["config"][0], coreRecord["name"])
+            core_branch = core_record["branch"]
+            core_url = "https://%s%s/%s.git" % (auth_prefix, core_record["config"][0], core_record["name"])
         except KeyError:
-            coreBranch = "master"
-            coreUrl = "https://github.com/oxwall/oxwall.git"
+            core_branch = "master"
+            core_url = "https://github.com/oxwall/oxwall.git"
 
-        command.main(os.path.abspath(self._arguments.path), coreUrl, self._arguments, coreBranch)
+        command.main(os.path.abspath(self._arguments.path), core_url, self._arguments, core_branch)
 
         # install
         try:
-            installRecord = sections["install"].values()[0]
+            install_record = sections["install"].values()[0]
             del sections["install"]
-            installBranch = installRecord["branch"]
-            installUrl = "https://%s%s/%s.git" % (authPrefix, installRecord["config"][0], installRecord["name"])
+            install_branch = install_record["branch"]
+            install_url = "https://%s%s/%s.git" % (auth_prefix, install_record["config"][0], install_record["name"])
         except KeyError:
-            installBranch = "master"
-            installUrl = "https://github.com/oxwall/install.git"
+            install_branch = "master"
+            install_url = "https://github.com/oxwall/install.git"
 
-
-        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), installUrl, self._arguments, installBranch, False)
+        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), install_url, self._arguments,
+                     install_branch, False)
 
         for sectionName in sections:
             records = sections[sectionName]
 
             try:
-                dirName = self._sectionFolders[sectionName]
+                dir_name = self._sectionFolders[sectionName]
             except IndexError:
                 continue
 
             for name in records:
                 record = records[name]
-                path = os.path.abspath(os.path.join(self._arguments.path, dirName, record["alias"]))
-                repoPrefix = record["config"][0] # repository prefix
-                url = "https://%s%s/%s.git" % (authPrefix, repoPrefix, record["name"])
+                path = os.path.abspath(os.path.join(self._arguments.path, dir_name, record["alias"]))
+                repo_prefix = record["config"][0]  # repository prefix
+                url = "https://%s%s/%s.git" % (auth_prefix, repo_prefix, record["name"])
                 command.item(path, url, self._arguments, record["branch"])
 
-        command.completed(self._arguments.path, coreUrl, self._arguments)
+        command.completed(self._arguments.path, core_url, self._arguments)
+
 
 def main():
     commands = [CloneCommand(), UpdateCommand(), MigrateCommand()]
     arguments = Arguments(commands)
 
-    arguments.readConfigs()
+    arguments.read_configs()
     arguments.parse()
 
     builder = Builder(arguments, commands)
     builder.process()
 
-    arguments.saveConfigs()
+    arguments.save_configs()
 
     print "\n%s command was completed !!!" % arguments.command
+
 
 if __name__ == "__main__":
     main()
