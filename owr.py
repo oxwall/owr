@@ -260,7 +260,7 @@ class Arguments:
                             action="store_true",
                             default=self.disableChmod,
                             required=False,
-                            help="Pass this flag if you want to clear all changes you made. Cannot be undone!!!")
+                            help="Pass this flag if you want to disable chmod!!!")
 
         parser.parse_args(namespace=self)
 
