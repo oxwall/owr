@@ -192,6 +192,7 @@ class Arguments:
     email = None
     verbose = False
     clearChanges = False
+    disableChmod = False
 
     runDir = None
 
@@ -251,6 +252,13 @@ class Arguments:
                             dest="clearChanges",
                             action="store_true",
                             default=self.clearChanges,
+                            required=False,
+                            help="Pass this flag if you want to clear all changes you made. Cannot be undone!!!")
+
+        parser.add_argument('--disable-chmod',
+                            dest="disableChmod",
+                            action="store_true",
+                            default=self.disableChmod,
                             required=False,
                             help="Pass this flag if you want to clear all changes you made. Cannot be undone!!!")
 
@@ -480,17 +488,17 @@ class CloneCommand(Command):
         config_file = os.path.join(root_dir, "ow_includes", "config.php")
         shutil.copyfile(os.path.join(root_dir, "ow_includes", "config.php.default"), config_file)
 
-        os.system("chmod 777 %s" % config_file)
-        os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_userfiles"))
-        os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_pluginfiles"))
-        os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_static"))
-        os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_log"))
-
         templatec_path = os.path.join(root_dir, "ow_smarty", "template_c")
         if not os.path.isdir(templatec_path):
             os.mkdir(templatec_path)
 
-        os.system("chmod -R 777 %s" % templatec_path)
+        if not args.disableChmod:
+            os.system("chmod 777 %s" % config_file)
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_userfiles"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_pluginfiles"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_static"))
+            os.system("chmod -R 777 %s" % os.path.join(root_dir, "ow_log"))
+            os.system("chmod -R 777 %s" % templatec_path)
 
 
 class MigrateCommand(Command):
