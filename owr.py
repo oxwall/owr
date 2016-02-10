@@ -185,6 +185,7 @@ class Arguments:
 
     username = None
     requirePassword = False
+    passwordString = None
     password = None
     command = None
     path = None
@@ -234,12 +235,18 @@ class Arguments:
                             required=False,
                             help="github.com user email. Required for migrate command only")
 
-        parser.add_argument('-p', '--password',
+        parser.add_argument('-p', '--prompt',
                             dest="requirePassword",
                             action="store_true",
                             default=self.requirePassword,
                             required=False,
                             help="Pass this flag if password authorization is required")
+
+        parser.add_argument('--password',
+                            dest="passwordString",
+                            default=self.passwordString,
+                            required=False,
+                            help="Password string")
 
         parser.add_argument('-v', '--verbose',
                             dest="verbose",
@@ -270,11 +277,14 @@ class Arguments:
         return command.validate_path(path.rstrip(os.sep), self)
 
     def _source(self, source):
-        if self.requirePassword and self.username:
-            try:
-                self.password = getpass.getpass("Enter password for user '%s': " % self.username)
-            except KeyboardInterrupt:
-                sys.exit(0)
+        if self.passwordString:
+            self.password = self.passwordString
+        else:
+            if self.requirePassword and self.username:
+                try:
+                    self.password = getpass.getpass("Enter password for user '%s': " % self.username)
+                except KeyboardInterrupt:
+                    sys.exit(0)
 
         if _is_file(source):
             if not os.path.isfile(source):
