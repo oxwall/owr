@@ -127,8 +127,8 @@ class SourceListParser:
         args = re.findall(reg_exp, alias)
 
         if args:
-            alias = re.sub(reg_exp, "", alias)
-            name = re.sub(reg_exp, "", name)
+            alias = re.sub(reg_exp, "", alias).strip()
+            name = re.sub(reg_exp, "", name).strip()
             branch = args[0]
 
         if self._repoSection["name"] not in self.records:
