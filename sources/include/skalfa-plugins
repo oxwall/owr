@@ -8,7 +8,6 @@ billingpwall = billing_pwall
 billingtxtnation = billing_txtnation
 im
 market
-matchmaking
 membership
 moderation = premoderation
 spamfilter = spam_filter
