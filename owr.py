@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import tempfile
 import urllib2
-import uuid
 
 SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/oxwall/owr/master/sources"
 COMPOSER_DOWNLOAD_URL = 'https://getcomposer.org/composer.phar'
