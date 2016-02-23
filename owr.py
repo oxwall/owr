@@ -393,7 +393,7 @@ class Command:
             output.close()
 
         shutil.copyfile(self.composer_tmp_path, "%s/composer.phar" % path)
-        os.chmod("%s/composer.phar" % path, 00700)
+        os.system("chmod +x %s/composer.phar" % path)
         if os.path.exists('%s/composer.lock' % path):
             sp = subprocess.Popen('./composer.phar update', shell=True, stdout=subprocess.PIPE, cwd=path)
         else:
