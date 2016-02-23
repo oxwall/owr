@@ -13,7 +13,7 @@ import urllib2
 import uuid
 
 SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/oxwall/owr/master/sources"
-COMPOSER_DOWNLOAD_URL = 'https://getcomposer.org/download/1.0.0-alpha11/composer.phar'
+COMPOSER_DOWNLOAD_URL = 'https://getcomposer.org/composer.phar'
 
 
 def _is_file(file_path):
@@ -387,19 +387,22 @@ class Command:
 
         if not self.composer_tmp_path:
             composer = urllib2.urlopen(COMPOSER_DOWNLOAD_URL)
-            self.composer_tmp_path = "/tmp/%s" % uuid.uuid4()
+            self.composer_tmp_path = tempfile.mkstemp()[1]
             output = open(self.composer_tmp_path, 'wb')
             output.write(composer.read())
             output.close()
 
         shutil.copyfile(self.composer_tmp_path, "%s/composer.phar" % path)
-        os.system("chmod +x %s/composer.phar" % path)
         if os.path.exists('%s/composer.lock' % path):
-            sp = subprocess.Popen('./composer.phar update', shell=True, stdout=subprocess.PIPE, cwd=path)
+            sp = subprocess.Popen('php composer.phar update', shell=True, stdout=subprocess.PIPE, cwd=path)
         else:
-            sp = subprocess.Popen('./composer.phar install', shell=True, stdout=subprocess.PIPE, cwd=path)
+            sp = subprocess.Popen('php composer.phar install', shell=True, stdout=subprocess.PIPE, cwd=path)
         result = sp.communicate()[0]
         print(result)
+
+    def clear_temp(self):
+        if self.name in ['update', 'clone']:
+            os.remove(self.composer_tmp_path)
 
     def completed(self, root_dir, url, args):
         pass
@@ -667,6 +670,7 @@ class Builder:
                 command.item(path, url, self._arguments, record["branch"])
                 command.composer(path)
 
+        command.clear_temp()
         command.completed(self._arguments.path, core_url, self._arguments)
 
 
