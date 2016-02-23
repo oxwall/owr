@@ -7,10 +7,12 @@ import os
 import re
 import sys
 import shutil
+import subprocess
 import tempfile
 import urllib2
 
 SOURCE_URL_PREFIX = "https://raw.githubusercontent.com/oxwall/owr/master/sources"
+COMPOSER_DOWNLOAD_URL = 'https://getcomposer.org/composer.phar'
 
 
 def _is_file(file_path):
@@ -361,6 +363,8 @@ class Arguments:
 
 
 class Command:
+    composer_tmp_path = ''
+
     def __init__(self, name):
         self.name = name
 
@@ -375,6 +379,29 @@ class Command:
 
     def item(self, path, url, args, branch, *opt):
         pass
+
+    def composer(self, path):
+        if self.name not in ['update', 'clone'] or not os.path.exists('%s/composer.json' % path):
+            return None
+
+        if not self.composer_tmp_path:
+            composer = urllib2.urlopen(COMPOSER_DOWNLOAD_URL)
+            self.composer_tmp_path = tempfile.mkstemp()[1]
+            output = open(self.composer_tmp_path, 'wb')
+            output.write(composer.read())
+            output.close()
+
+        shutil.copyfile(self.composer_tmp_path, "%s/composer.phar" % path)
+        if os.path.exists('%s/composer.lock' % path):
+            sp = subprocess.Popen('php composer.phar update', shell=True, stdout=subprocess.PIPE, cwd=path)
+        else:
+            sp = subprocess.Popen('php composer.phar install', shell=True, stdout=subprocess.PIPE, cwd=path)
+        result = sp.communicate()[0]
+        print(result)
+
+    def clear_temp(self):
+        if self.name in ['update', 'clone']:
+            os.remove(self.composer_tmp_path)
 
     def completed(self, root_dir, url, args):
         pass
@@ -611,6 +638,7 @@ class Builder:
             core_url = "https://github.com/oxwall/oxwall.git"
 
         command.main(os.path.abspath(self._arguments.path), core_url, self._arguments, core_branch)
+        command.composer(os.path.abspath(self._arguments.path))
 
         # install
         try:
@@ -639,7 +667,9 @@ class Builder:
                 repo_prefix = record["config"][0]  # repository prefix
                 url = "https://%s%s/%s.git" % (auth_prefix, repo_prefix, record["name"])
                 command.item(path, url, self._arguments, record["branch"])
+                command.composer(path)
 
+        command.clear_temp()
         command.completed(self._arguments.path, core_url, self._arguments)
 
 
