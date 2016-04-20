@@ -30,6 +30,8 @@ def _is_relative_url(url):
 def _is_absolute_url(url):
     return url.startswith(("http://", "https://"))
 
+def _get_ssh_url(url):
+    return url.replace('https://github.com/', 'git@github.com:').replace('http://github.com/', 'git@github.com:')
 
 def _change_branch(directory, branch, is_quiet=True):
     quiet = "--quiet" if is_quiet else ""
@@ -189,6 +191,7 @@ class Arguments:
     requirePassword = False
     passwordString = None
     password = None
+    ssh = False
     command = None
     path = None
     source = "oxwall"
@@ -249,6 +252,13 @@ class Arguments:
                             default=self.passwordString,
                             required=False,
                             help="Password string")
+
+        parser.add_argument('--ssh',
+                            dest="ssh",
+                            action="store_true",
+                            default=self.ssh,
+                            required=False,
+                            help="Use ssh")
 
         parser.add_argument('-v', '--verbose',
                             dest="verbose",
@@ -600,10 +610,11 @@ class InfoCommand(Command):
 
 class Builder:
     _arguments = None
-    _parser = None
-
+    _auth = None
+    _auth_prefix = None
     _commands = {}
-
+    _parser = None
+    _sections = None
     _sectionFolders = {
         "plugins": "ow_plugins",
         "themes": "ow_themes"
@@ -614,47 +625,45 @@ class Builder:
         self._arguments = arguments
         self._commands = dict(zip(map(lambda c: c.name, commands), commands))
 
-    def process(self):
-        command = self._commands[self._arguments.command]
-
-        sections = self._parser.fetch()
-        command.fetched(sections, self._arguments)
-
-        auth_prefix = ""
+    def auth(self):
+        self._auth_prefix = ""
         if self._arguments.username:
-            auth = self._arguments.username
+            self._auth = self._arguments.username
             if self._arguments.password:
-                auth = "%s:%s" % (self._arguments.username, urllib2.quote(self._arguments.password))
-            auth_prefix = "%s@" % auth
+                self._auth = "%s:%s" % (self._arguments.username, urllib2.quote(self._arguments.password))
+            self._auth_prefix = "%s@" % self._auth
 
-        # core
+    def core(self):
         try:
-            core_record = sections["core"].values()[0]
-            del sections["core"]
+            core_record = self._sections["core"].values()[0]
+            del self._sections["core"]
             core_branch = core_record["branch"]
-            core_url = "https://%s%s/%s.git" % (auth_prefix, core_record["config"][0], core_record["name"])
+            core_url = "https://%s%s/%s.git" % (self._auth_prefix, core_record["config"][0], core_record["name"])
         except KeyError:
             core_branch = "master"
             core_url = "https://github.com/oxwall/oxwall.git"
+        if self._arguments.ssh:
+            core_url = _get_ssh_url(core_url)
+        return core_branch, core_url
 
-        command.main(os.path.abspath(self._arguments.path), core_url, self._arguments, core_branch)
-        command.composer(os.path.abspath(self._arguments.path))
-
-        # install
+    def install(self):
         try:
-            install_record = sections["install"].values()[0]
-            del sections["install"]
+            install_record = self._sections["install"].values()[0]
+            del self._sections["install"]
             install_branch = install_record["branch"]
-            install_url = "https://%s%s/%s.git" % (auth_prefix, install_record["config"][0], install_record["name"])
+            install_url = "https://%s%s/%s.git" % (
+                self._auth_prefix, install_record["config"][0], install_record["name"])
         except KeyError:
             install_branch = "master"
             install_url = "https://github.com/oxwall/install.git"
+        if self._arguments.ssh:
+            install_url = _get_ssh_url(install_url)
+        return install_branch, install_url
 
-        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), install_url, self._arguments,
-                     install_branch, False)
-
-        for sectionName in sections:
-            records = sections[sectionName]
+    def records(self):
+        r = []
+        for sectionName in self._sections:
+            records = self._sections[sectionName]
 
             try:
                 dir_name = self._sectionFolders[sectionName]
@@ -665,9 +674,33 @@ class Builder:
                 record = records[name]
                 path = os.path.abspath(os.path.join(self._arguments.path, dir_name, record["alias"]))
                 repo_prefix = record["config"][0]  # repository prefix
-                url = "https://%s%s/%s.git" % (auth_prefix, repo_prefix, record["name"])
-                command.item(path, url, self._arguments, record["branch"])
-                command.composer(path)
+                url = "https://%s%s/%s.git" % (self._auth_prefix, repo_prefix, record["name"])
+                if self._arguments.ssh:
+                    url = _get_ssh_url(url)
+                r.append({'path': path, 'url': url, 'branch': record['branch']})
+        return r
+
+    def process(self):
+        command = self._commands[self._arguments.command]
+
+        self._sections = self._parser.fetch()
+        command.fetched(self._sections, self._arguments)
+
+        self.auth()
+        core_branch, core_url = self.core()
+
+        command.main(os.path.abspath(self._arguments.path), core_url, self._arguments, core_branch)
+        command.composer(os.path.abspath(self._arguments.path))
+
+        install_branch, install_url = self.install()
+
+        command.item(os.path.abspath(os.path.join(self._arguments.path, "ow_install")), install_url, self._arguments,
+                     install_branch, False)
+
+        records = self.records()
+        for r in records:
+            command.item(r['path'], r['url'], self._arguments, r['branch'])
+            command.composer(r['path'])
 
         command.clear_temp()
         command.completed(self._arguments.path, core_url, self._arguments)
