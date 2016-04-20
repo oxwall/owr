@@ -31,7 +31,16 @@ def _is_absolute_url(url):
     return url.startswith(("http://", "https://"))
 
 def _get_ssh_url(url):
-    return url.replace('https://github.com/', 'git@github.com:').replace('http://github.com/', 'git@github.com:')
+    return url.replace('https://', 'git@').replace('http://', 'git@')
+
+def ssh_url(f):
+    def wrapper(*args):
+        branch, url = f(*args)
+        if args[0]._arguments.ssh:
+            url = _get_ssh_url(url)
+        return branch, url
+    return wrapper
+
 
 def _change_branch(directory, branch, is_quiet=True):
     quiet = "--quiet" if is_quiet else ""
@@ -115,6 +124,8 @@ class SourceListParser:
     def _process_section(self, section):
         parts = map(str.strip, section.split(" "))
         self._repoSection["name"] = parts[0]
+        if self._arguments.ssh:
+            parts[1] = parts[1].replace('/', ':')
         self._repoSection["config"] = parts[1:] if len(parts) > 1 else self._defaultConfig
 
     def _process_line(self, line):
@@ -633,6 +644,7 @@ class Builder:
                 self._auth = "%s:%s" % (self._arguments.username, urllib2.quote(self._arguments.password))
             self._auth_prefix = "%s@" % self._auth
 
+    @ssh_url
     def core(self):
         try:
             core_record = self._sections["core"].values()[0]
@@ -642,10 +654,9 @@ class Builder:
         except KeyError:
             core_branch = "master"
             core_url = "https://github.com/oxwall/oxwall.git"
-        if self._arguments.ssh:
-            core_url = _get_ssh_url(core_url)
         return core_branch, core_url
 
+    @ssh_url
     def install(self):
         try:
             install_record = self._sections["install"].values()[0]
@@ -656,8 +667,6 @@ class Builder:
         except KeyError:
             install_branch = "master"
             install_url = "https://github.com/oxwall/install.git"
-        if self._arguments.ssh:
-            install_url = _get_ssh_url(install_url)
         return install_branch, install_url
 
     def records(self):
