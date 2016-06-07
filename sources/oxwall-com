@@ -1,0 +1,39 @@
+<include oxwall-core>
+
+[plugins github.com/oxwall]
+
+advertisement
+birthdays
+blogs
+cloudflare
+contactimporter = contact_importer
+contactus
+event
+fbconnect
+forum
+friends
+ganalytics = google_analytics
+groups
+slideshow
+mailbox
+newsfeed
+notifications
+photo
+privacy
+socialsharing = social_sharing
+video
+virtualgifts = virtual_gifts
+
+[plugins github.com/skalfa]
+
+billingpaypal = billing_paypal
+membership
+usercredits = user_credits
+moderation = premoderation
+
+
+[themes github.com/oxwall]
+
+darklets
+showcase
+crayon
