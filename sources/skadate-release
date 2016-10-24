@@ -10,7 +10,15 @@ virtualgifts = virtual_gifts
 contactus
 ganalytics = google_analytics
 fbconnect
-
+blogs
+contactimporter
+event
+forum
+friends
+groups
+slideshow
+newsfeed
+privacy
 
 [plugins github.com/skalfa]
 
@@ -29,6 +37,7 @@ hotlist
 skadate
 moderation = premoderation
 protectedphotos
+videoim
 
 
 [themes github.com/skalfa]
