@@ -4,7 +4,7 @@ skadate
 skmigration = skadate_migration
 skandroid = skadateandroid
 skadateios
-skmobileapp
+skmobile-app = skmobileapp
 slpremiumtheme
 winks
 usearch
