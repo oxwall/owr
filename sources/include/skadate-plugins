@@ -16,3 +16,4 @@ hotlist
 ocsguests = ocs_guests
 lpage
 customindex
+firebaseauth = firebase_auth
