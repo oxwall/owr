@@ -9,7 +9,6 @@ notifications
 virtualgifts = virtual_gifts
 contactus
 ganalytics = google_analytics
-fbconnect
 blogs
 contactimporter
 event
@@ -39,6 +38,10 @@ moderation = premoderation
 protectedphotos
 videoim
 slpremiumtheme
+firebaseauth = firebase_auth
+customindex
+gdpr
+billingpaypal
 
 [themes github.com/skalfa]
 
@@ -67,3 +70,4 @@ men2men
 panda
 salaam
 values
+platinum_pro
