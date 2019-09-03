@@ -38,7 +38,7 @@ moderation = premoderation
 protectedphotos
 videoim
 slpremiumtheme
-firebaseauth = firebase_auth
+firebase_auth
 customindex
 gdpr
 billingstripe = billing_stripe
