@@ -38,9 +38,10 @@ moderation = premoderation
 protectedphotos
 videoim
 slpremiumtheme
-firebase_auth
+firebaseauth = firebase_auth
 customindex
 gdpr
+billingstripe = billing_stripe
 
 [themes github.com/skalfa]
 
