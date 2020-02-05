@@ -42,6 +42,7 @@ firebase_auth
 customindex
 gdpr
 billingstripe = billing_stripe
+smsverification
 
 [themes github.com/skalfa]
 
