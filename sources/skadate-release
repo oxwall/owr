@@ -21,7 +21,7 @@ privacy
 
 [plugins github.com/skalfa]
 
-billingccbill = billing_ccbill
+billingccbillflex = billing_ccbill_flex
 bookmarks
 winks
 matchmaking
