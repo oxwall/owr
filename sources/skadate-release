@@ -43,6 +43,7 @@ customindex
 gdpr
 billingstripe = billing_stripe
 smsverification
+miniature_theme_settings
 
 [themes github.com/skalfa]
 
@@ -72,3 +73,4 @@ panda
 salaam
 values
 platinum_pro
+miniature
