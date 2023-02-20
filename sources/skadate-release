@@ -8,14 +8,11 @@ mailbox
 notifications
 virtualgifts = virtual_gifts
 contactus
-ganalytics = google_analytics
 blogs
-contactimporter
 event
 forum
 friends
 groups
-slideshow
 newsfeed
 privacy
 
@@ -23,7 +20,6 @@ privacy
 
 billing_ccbill_flex
 bookmarks
-winks
 matchmaking
 usearch
 pcgallery
@@ -47,12 +43,8 @@ miniature_theme_settings
 
 [themes github.com/skalfa]
 
-trend
 tenderness
-gentle
 friends
-sweet
-morning
 alter
 darkshades
 light
@@ -62,15 +54,11 @@ seduction
 velvet
 bloxx
 faith
-lightshades
-noir
 pencil
 tropic
-chicos
 intense
 men2men
 panda
 salaam
-values
 platinum_pro
 miniature
