@@ -17,3 +17,5 @@ ocsguests = ocs_guests
 lpage
 customindex
 firebaseauth = firebase_auth
+miniature_theme_settings
+midnight_theme_settings

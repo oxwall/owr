@@ -40,6 +40,7 @@ gdpr
 billingstripe = billing_stripe
 smsverification
 miniature_theme_settings
+midnight_theme_settings
 
 [themes github.com/skalfa]
 
@@ -62,3 +63,4 @@ panda
 salaam
 platinum_pro
 miniature
+midnight
